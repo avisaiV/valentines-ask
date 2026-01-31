@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Question for Lani 💛</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <main class="wrap">
+      <section class="card">
+        <p class="pill">for Lani 💛</p>
+
+        <h1>Okay… serious question 😌</h1>
+        <p class="sub">
+          I made this because I like you a lot.
+          And because I’m cute and can code.
+        </p>
+
+        <div class="photo">
+          <!-- Put your image here -->
+          <img src="assets/images/cover.jpg" alt="Us" />
+        </div>
+
+        <div class="music">
+          <p class="label">Press play (mandatory)</p>
+          <audio controls preload="metadata">
+            <source src="assets/music/song.mp3" type="audio/mpeg" />
+          </audio>
+          <p class="tiny">If it doesn’t play on iPhone, tap play. Apple is annoying.</p>
+        </div>
+
+        <h2>Will you be my Valentine?</h2>
+        <p class="tiny">Choose wisely.</p>
+
+        <div class="buttons">
+          <button id="yes" class="btn">Yes 💛</button>
+          <button id="no" class="btn ghost">No 😭</button>
+        </div>
+
+        <p id="msg" class="msg"></p>
+
+        <div id="after" class="after" hidden>
+          <p class="big">Correct answer 😌💛</p>
+          <p class="tiny">
+            Now we go eat something good, take cute pics, and I’ll pretend I’m not obsessed.
+          </p>
+          <a class="btn" href="#" onclick="return false;">Screenshot this and send it to me 📸</a>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const yes = document.getElementById("yes");
+      const no = document.getElementById("no");
+      const msg = document.getElementById("msg");
+      const after = document.getElementById("after");
+
+      const noLines = [
+        "That’s crazy… try again 😭",
+        "No button is for decoration.",
+        "Be serious.",
+        "Lani… c’mon now.",
+        "Not allowed."
+      ];
+
+      yes.addEventListener("click", () => {
+        msg.textContent = "W. I knew you were smart 💛";
+        after.hidden = false;
+        yes.disabled = true;
+        no.disabled = true;
+      });
+
+      // Dodge the mouse
+      no.addEventListener("mouseenter", () => {
+        const card = document.querySelector(".card");
+        const rect = card.getBoundingClientRect();
+
+        const maxX = rect.width - no.offsetWidth - 24;
+        const maxY = rect.height - no.offsetHeight - 24;
+
+        const x = Math.max(12, Math.floor(Math.random() * maxX));
+        const y = Math.max(12, Math.floor(Math.random() * maxY));
+
+        no.style.position = "absolute";
+        no.style.left = x + "px";
+        no.style.top = y + "px";
+
+        msg.textContent = noLines[Math.floor(Math.random() * noLines.length)];
+      });
+    </script>
+  </body>
+</html>
