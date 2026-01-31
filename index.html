@@ -99,28 +99,51 @@
       function growYes() {
         noAttempts += 1;
 
-        // grows each attempt but capped so it doesn't break layout
-        const scale = Math.min(1 + noAttempts * 0.12, 1.9);
-        yes.style.transform = `scale(${scale})`;
+        // grows every attempt; gets ridiculous (cap is huge on purpose)
+        const scale = Math.min(1 + noAttempts * 0.22, 12);
 
-        // tiny bounce feel
+        // once it starts getting big, pin it to screen center so it "takes over"
+        if (scale >= 2.2) {
+            yes.style.position = "fixed";
+            yes.style.left = "50%";
+            yes.style.top = "50%";
+            yes.style.zIndex = "9999";
+            yes.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        } else {
+            yes.style.transform = `scale(${scale})`;
+        }
+
+        // when it’s massive, make sure it's literally the only thing you notice
+        if (scale >= 6) {
+            yes.style.padding = "24px 40px";
+            yes.style.borderRadius = "26px";
+        }
+
+        // bounce
         yes.classList.remove("yes-pop");
-        void yes.offsetWidth; // reflow to restart animation
+        void yes.offsetWidth;
         yes.classList.add("yes-pop");
-      }
+        }
+
 
       function dodgeNo() {
-        const rect = card.getBoundingClientRect();
-        const maxX = rect.width - no.offsetWidth - 24;
-        const maxY = rect.height - no.offsetHeight - 24;
+        // keep NO always on-screen
+        no.style.position = "fixed";
+        no.style.zIndex = "2000";
 
-        const x = Math.max(12, Math.floor(Math.random() * maxX));
-        const y = Math.max(12, Math.floor(Math.random() * maxY));
+        const pad = 12;
+        const btnW = no.offsetWidth;
+        const btnH = no.offsetHeight;
 
-        no.style.position = "absolute";
-        no.style.left = x + "px";
-        no.style.top = y + "px";
-      }
+        const maxX = window.innerWidth - btnW - pad;
+        const maxY = window.innerHeight - btnH - pad;
+
+        const x = Math.floor(pad + Math.random() * Math.max(1, maxX - pad));
+        const y = Math.floor(pad + Math.random() * Math.max(1, maxY - pad));
+
+        no.style.left = `${x}px`;
+        no.style.top = `${y}px`;
+        }
 
       yes.addEventListener("click", async () => {
         msg.textContent = "W. Correct answer. I knew you were smart 💗";
