@@ -9,22 +9,28 @@
 
   <body>
     <div class="bg-sparkles" aria-hidden="true"></div>
+    <div class="petals" id="petals" aria-hidden="true"></div>
+    <div class="trail" id="trail" aria-hidden="true"></div>
 
     <main class="wrap">
       <section class="card" id="card">
-        <h1 class="question" id="question">
-          Will you be my Valentine?
-        </h1>
+        <h1 class="question" id="question">Will you be my Valentine?</h1>
 
-        <p class="sub" id="subtitle">
-          Choose wisely.
-        </p>
+        <p class="sub" id="subtitle">Choose wisely.</p>
+        <button id="startBtn" class="startBtn" type="button">
+          Click to start 💗
+        </button>
 
         <div class="photo" id="photo">
           <img id="mainImg" src="assets/images/monkeys.jpg" alt="Cute photo" />
+          <div class="photoHint">tap to see full pic</div>
         </div>
 
         <!-- hidden audio (no player UI) -->
+        <audio id="startSong" loop>
+          <source src="assets/music/end-of-the-road.mp3" type="audio/mpeg" />
+        </audio>
+
         <audio id="song" preload="auto">
           <source src="assets/music/careless-whisper.mp3" type="audio/mpeg" />
         </audio>
@@ -36,27 +42,51 @@
 
         <p id="msg" class="msg" aria-live="polite"></p>
 
-        <div id="after" class="after" hidden>
-          <p class="after__title">Correct answer 😌💗</p>
-        </div>
-
         <footer class="footer">
           <p>Made with love 💗</p>
         </footer>
       </section>
     </main>
 
+
+    <div class="dancers" id="dancers" aria-hidden="false">
+      <img class="dancer d1" src="assets/images/skeleton.gif" alt="Dancer 1" />
+      <img class="dancer d2" src="assets/images/skeleton.gif" alt="Dancer 2" />
+      <img class="dancer d3" src="assets/images/skeleton.gif" alt="Dancer 3" />
+      <img class="dancer d4" src="assets/images/skeleton.gif" alt="Dancer 4" />
+    </div>
+
+
     <div class="confetti" id="confetti" aria-hidden="true"></div>
 
+    <!-- Lightbox (feature) -->
+    <div class="lightbox" id="lightbox" aria-hidden="true">
+      <div class="lightbox__inner">
+        <img id="lightboxImg" alt="Preview" />
+        <div class="lightbox__hint">tap anywhere to close</div>
+      </div>
+    </div>
+
     <script>
+      const startSong = document.getElementById("startSong");
+      const startBtn = document.getElementById("startBtn");
+      let started = false;
+      const question = document.getElementById("question");
+      const subtitle = document.getElementById("subtitle");
       const yes = document.getElementById("yes");
       const no = document.getElementById("no");
       const msg = document.getElementById("msg");
-      const after = document.getElementById("after");
       const song = document.getElementById("song");
       const mainImg = document.getElementById("mainImg");
       const confetti = document.getElementById("confetti");
       const card = document.getElementById("card");
+      const dancers = document.getElementById("dancers");
+
+      const petals = document.getElementById("petals");
+      const trail = document.getElementById("trail");
+
+      const lightbox = document.getElementById("lightbox");
+      const lightboxImg = document.getElementById("lightboxImg");
 
       const noLines = [
         "Nice try 😭",
@@ -68,11 +98,90 @@
       ];
 
       let noAttempts = 0;
+      let muted = false;
 
+      // ---------------------------
+      // Feature 1: Falling petals/hearts
+      // ---------------------------
+      const petalEmojis = ["🌹","🌸","💗","💖","💕","💘","💞"];
+      let petalRate = 600; // ms (faster = more petals)
+      let petalTimer = null;
+
+      function spawnPetal() {
+        const s = document.createElement("span");
+        s.className = "petal";
+        s.textContent = petalEmojis[Math.floor(Math.random() * petalEmojis.length)];
+
+        const size = 14 + Math.random() * 24;
+        const left = Math.random() * 100;
+
+        s.style.left = left + "vw";
+        s.style.fontSize = size + "px";
+        s.style.animationDuration = (6 + Math.random() * 5) + "s";
+        s.style.opacity = (0.45 + Math.random() * 0.45).toFixed(2);
+        s.style.setProperty("--drift", (Math.random() * 120 - 60) + "px");
+        petals.appendChild(s);
+
+        // cleanup
+        setTimeout(() => s.remove(), 12000);
+      }
+
+      function startPetals() {
+        if (petalTimer) return;
+        petalTimer = setInterval(spawnPetal, petalRate);
+      }
+
+      function updatePetalIntensity() {
+        // more "No" attempts -> more chaos
+        petalRate = Math.max(120, 600 - noAttempts * 55);
+        if (petalTimer) {
+          clearInterval(petalTimer);
+          petalTimer = setInterval(spawnPetal, petalRate);
+        }
+      }
+
+      startBtn.addEventListener("click", async () => {
+        // hide the button immediately
+        startBtn.style.display = "none";
+
+        // optional: start the background song on the click
+        try {
+          startSong.currentTime = 0;
+          await startSong.play();
+        } catch (e) {}
+      });
+
+      startPetals();
+
+      // ---------------------------
+      // Feature 2: Cursor sparkle trail
+      // ---------------------------
+      const trailEmojis = ["✨","💗","💖","🌸"];
+      let lastTrail = 0;
+
+      window.addEventListener("mousemove", (e) => {
+        const now = performance.now();
+        if (now - lastTrail < 30) return; // throttle
+        lastTrail = now;
+
+        const t = document.createElement("span");
+        t.className = "trail__bit";
+        t.textContent = trailEmojis[Math.floor(Math.random() * trailEmojis.length)];
+        t.style.left = e.clientX + "px";
+        t.style.top = e.clientY + "px";
+        t.style.fontSize = (12 + Math.random() * 16) + "px";
+        trail.appendChild(t);
+
+        setTimeout(() => t.remove(), 600);
+      });
+
+      // ---------------------------
+      // Confetti burst
+      // ---------------------------
       function popConfetti() {
         confetti.innerHTML = "";
         const emojis = ["💗","💖","🌹","💘","💕","🌸","💞","❤️‍🔥"];
-        const count = 48;
+        const count = 70;
 
         for (let i = 0; i < count; i++) {
           const s = document.createElement("span");
@@ -87,87 +196,222 @@
       }
 
       async function playSong() {
-        // Works because this is triggered by user interaction (click)
         try {
+          song.muted = muted;
           song.currentTime = 0;
           await song.play();
         } catch (e) {
-          // keep simple - no extra text changes
+          // silent
         }
       }
 
+      // ---------------------------
+      // YES grows (your mechanic)
+      // ---------------------------
       function growYes() {
         noAttempts += 1;
 
-        // grows every attempt; gets ridiculous (cap is huge on purpose)
-        const scale = Math.min(1 + noAttempts * 0.22, 12);
+        // grows hard
+        const scale = Math.min(1 + noAttempts * 0.22, 14);
 
-        // once it starts getting big, pin it to screen center so it "takes over"
         if (scale >= 2.2) {
-            yes.style.position = "fixed";
-            yes.style.left = "50%";
-            yes.style.top = "50%";
-            yes.style.zIndex = "9999";
-            yes.style.transform = `translate(-50%, -50%) scale(${scale})`;
+          yes.style.position = "fixed";
+          yes.style.left = "50%";
+          yes.style.top = "50%";
+          yes.style.zIndex = "9999";
+          yes.style.transform = `translate(-50%, -50%) scale(${scale})`;
         } else {
-            yes.style.transform = `scale(${scale})`;
+          yes.style.transform = `scale(${scale})`;
         }
 
-        // when it’s massive, make sure it's literally the only thing you notice
         if (scale >= 6) {
-            yes.style.padding = "24px 40px";
-            yes.style.borderRadius = "26px";
+          yes.style.padding = "24px 40px";
+          yes.style.borderRadius = "26px";
         }
+
+        // make the whole screen feel “more valentines” as it escalates
+        document.documentElement.style.setProperty("--heat", Math.min(1, noAttempts / 8));
 
         // bounce
         yes.classList.remove("yes-pop");
         void yes.offsetWidth;
         yes.classList.add("yes-pop");
-        }
 
+        // card lil shake for drama
+        card.classList.remove("shake");
+        void card.offsetWidth;
+        card.classList.add("shake");
 
-      function dodgeNo() {
-        // keep NO always on-screen
+        // more petals as she fights it
+        updatePetalIntensity();
+      }
+
+      // ---------------------------
+      // Feature 5: NO dodges BUT avoids YES zone
+      // ---------------------------
+      function dodgeNoOutsideYes() {
         no.style.position = "fixed";
         no.style.zIndex = "2000";
 
         const pad = 12;
-        const btnW = no.offsetWidth;
-        const btnH = no.offsetHeight;
+        const btnW = no.offsetWidth || 80;
+        const btnH = no.offsetHeight || 44;
 
         const maxX = window.innerWidth - btnW - pad;
         const maxY = window.innerHeight - btnH - pad;
 
-        const x = Math.floor(pad + Math.random() * Math.max(1, maxX - pad));
-        const y = Math.floor(pad + Math.random() * Math.max(1, maxY - pad));
+        const yesRect = yes.getBoundingClientRect();
+        const buffer = 20;
 
-        no.style.left = `${x}px`;
-        no.style.top = `${y}px`;
+        // if YES is basically the whole screen, we can't avoid it.
+        // keep NO visible in a corner anyway (still moves when possible).
+        const yesArea = Math.max(0, yesRect.width) * Math.max(0, yesRect.height);
+        const screenArea = window.innerWidth * window.innerHeight;
+        const yesCoversMost = (yesArea / screenArea) > 0.85;
+
+        function overlapsYesZone(x, y) {
+          const noRect = {
+            left: x,
+            top: y,
+            right: x + btnW,
+            bottom: y + btnH
+          };
+
+          const zone = {
+            left: yesRect.left - buffer,
+            top: yesRect.top - buffer,
+            right: yesRect.right + buffer,
+            bottom: yesRect.bottom + buffer
+          };
+
+          return (
+            noRect.left < zone.right &&
+            noRect.right > zone.left &&
+            noRect.top < zone.bottom &&
+            noRect.bottom > zone.top
+          );
         }
 
+        function randomPos() {
+          const x = Math.floor(pad + Math.random() * Math.max(1, maxX - pad));
+          const y = Math.floor(pad + Math.random() * Math.max(1, maxY - pad));
+          return { x, y };
+        }
+
+        if (yesCoversMost) {
+          // still visible, but yes is basically everything
+          const corners = [
+            { x: pad, y: pad },
+            { x: maxX, y: pad },
+            { x: pad, y: maxY },
+            { x: maxX, y: maxY }
+          ];
+          const pick = corners[Math.floor(Math.random() * corners.length)];
+          no.style.left = `${pick.x}px`;
+          no.style.top = `${pick.y}px`;
+          return;
+        }
+
+        let pos = randomPos();
+        let tries = 0;
+
+        while (overlapsYesZone(pos.x, pos.y) && tries < 80) {
+          pos = randomPos();
+          tries++;
+        }
+
+        no.style.left = `${pos.x}px`;
+        no.style.top = `${pos.y}px`;
+      }
+
+      // ---------------------------
+      // Feature 3: Lightbox on photo tap
+      // ---------------------------
+      function openLightbox() {
+        lightboxImg.src = mainImg.src;
+        lightbox.classList.add("open");
+        lightbox.setAttribute("aria-hidden", "false");
+      }
+
+      function closeLightbox() {
+        lightbox.classList.remove("open");
+        lightbox.setAttribute("aria-hidden", "true");
+      }
+
+      document.getElementById("photo").addEventListener("click", openLightbox);
+      lightbox.addEventListener("click", closeLightbox);
+
+      // ---------------------------
+      // Feature 4: Keyboard shortcuts
+      // ---------------------------
+      window.addEventListener("keydown", (e) => {
+        const k = e.key.toLowerCase();
+        if (k === "y") yes.click();
+        if (k === "n") {
+          e.preventDefault();
+          handleNoAttempt();
+        }
+        if (k === "m") {
+          muted = !muted;
+          song.muted = muted;
+        }
+        if (k === "escape") closeLightbox();
+      });
+
+      // ---------------------------
+      // Button logic
+      // ---------------------------
+      const allDancers = document.querySelectorAll(".dancer");
+
+      // Start "End of the Road" on the first click anywhere
+      document.addEventListener('click', () => {
+          if (startSong.paused && !yes.disabled) {
+              startSong.play();
+          }
+      }, { once: true });
+
       yes.addEventListener("click", async () => {
-        msg.textContent = "W. Correct answer. I knew you were smart 💗";
-        after.hidden = false;
+        // 1. Swap Songs
+        startSong.pause();
+        await playSong(); // Plays Careless Whisper
 
-        // image swap (your current paths)
-        mainImg.classList.add("img-pop");
-        mainImg.src = "assets/images/dog.gif";
-        setTimeout(() => mainImg.classList.remove("img-pop"), 240);
+        // 2. Change Text
+        question.textContent = "yayyyyyyy";
+        subtitle.textContent = "literally us";
+        msg.textContent = "Correct answer. Ohhhhhhh yeahhhhhhhhhh";
 
+        // 3. Swap Skeleton Dancers for Dog Dancers
+        const dogImages = [
+          "assets/images/dog.gif",
+          "assets/images/dog2.jfif",
+          "assets/images/dog3.jpg",
+          "assets/images/dog4.jfif"
+        ];
+        allDancers.forEach((img, index) => {
+          img.src = dogImages[index];
+        });
+
+        // 4. Delayed Reveal of the Main Dog Photo
+        setTimeout(() => {
+          mainImg.classList.add("img-pop");
+          mainImg.src = "assets/images/dog5.jpg"; 
+          subtitle.textContent = "me rn";
+          setTimeout(() => mainImg.classList.remove("img-pop"), 240);
+        }, 25); 
+
+        // Cleanup UI
+        yes.style.display = "none";
+        no.style.display = "none";
         card.classList.add("card-win");
         popConfetti();
-
-        await playSong();
-
         yes.disabled = true;
         no.disabled = true;
       });
 
-      // If she tries no → yes grows + no dodges + message changes
       const handleNoAttempt = () => {
         if (yes.disabled) return;
         growYes();
-        dodgeNo();
+        dodgeNoOutsideYes();
         msg.textContent = noLines[Math.floor(Math.random() * noLines.length)];
       };
 
@@ -175,6 +419,10 @@
       no.addEventListener("click", (e) => {
         e.preventDefault();
         handleNoAttempt();
+      });
+
+      window.addEventListener("resize", () => {
+        if (!yes.disabled) dodgeNoOutsideYes();
       });
     </script>
   </body>
