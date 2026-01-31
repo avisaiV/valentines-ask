@@ -3,75 +3,133 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Question for Lani 💛</title>
+    <title>Be My Valentine? 💗</title>
     <link rel="stylesheet" href="style.css" />
   </head>
 
   <body>
+    <!-- floating hearts/roses layer -->
+    <div class="bg-sparkles" aria-hidden="true"></div>
+
     <main class="wrap">
-      <section class="card">
+      <section class="card" id="card">
 
-        <h1>Okay… serious question 😌</h1>
+        <h1 class="question" id="question">
+          Will you be my Valentine?
+        </h1>
 
-        <div class="photo">
-          <!-- Put your image here -->
-          <img src="assets/images/monkeys.jpg" alt="Us" />
+        <p class="sub" id="subtitle">
+          Choose wisely.
+        </p>
+
+        <div class="photo" id="photo">
+          <img id="mainImg" src="assets/images/cover.jpg" alt="Cute photo" />
         </div>
 
-        <div class="music">
-          <p class="label">Press play (mandatory)</p>
-          <audio controls preload="metadata">
-            <source src="assets/music/song.mp3" type="audio/mpeg" />
-          </audio>
-          <p class="tiny">If it doesn’t play on iPhone, tap play. Apple is annoying.</p>
-        </div>
-
-        <h2>Will you be my Valentine?</h2>
-        <p class="tiny">Choose wisely.</p>
+        <!-- hidden audio (no player UI) -->
+        <audio id="song" preload="auto">
+          <source src="assets/music/careless-whisper.mp3" type="audio/mpeg" />
+        </audio>
 
         <div class="buttons">
-          <button id="yes" class="btn">Yes 💛</button>
-          <button id="no" class="btn ghost">No 😭</button>
+          <button id="yes" class="btn btn--yes" type="button">Yes 💗</button>
+          <button id="no" class="btn btn--no" type="button">No</button>
         </div>
 
-        <p id="msg" class="msg"></p>
+        <p id="msg" class="msg" aria-live="polite"></p>
 
         <div id="after" class="after" hidden>
-          <p class="big">Correct answer 😌💛</p>
-          <p class="tiny">
-            Now we go eat something good, take cute pics, and I’ll pretend I’m not obsessed.
+          <p class="after__title">Correct answer 😌💗</p>
+          <p class="after__text">
+            Now we go eat something good, take cute pics, and I’ll pretend I’m not obsessed (I am).
           </p>
-          <a class="btn" href="#" onclick="return false;">Screenshot this and send it to me 📸</a>
+          <button class="btn btn--yes" type="button" id="again">
+            Replay the moment 🎶
+          </button>
         </div>
+
+        <footer class="footer">
+          <p>Made with love 💗</p>
+        </footer>
       </section>
     </main>
+
+    <!-- confetti hearts container -->
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
 
     <script>
       const yes = document.getElementById("yes");
       const no = document.getElementById("no");
       const msg = document.getElementById("msg");
       const after = document.getElementById("after");
+      const song = document.getElementById("song");
+      const mainImg = document.getElementById("mainImg");
+      const confetti = document.getElementById("confetti");
+      const again = document.getElementById("again");
+      const card = document.getElementById("card");
 
       const noLines = [
-        "That’s crazy… try again 😭",
-        "No button is for decoration.",
+        "Nice try 😭",
         "Be serious.",
+        "That button is for decoration.",
         "Lani… c’mon now.",
-        "Not allowed."
+        "Not allowed.",
+        "Wrong answer. Try again."
       ];
 
-      yes.addEventListener("click", () => {
-        msg.textContent = "W. I knew you were smart 💛";
+      function popConfetti() {
+        confetti.innerHTML = "";
+        const emojis = ["💗","💖","🌹","💘","💕","🌸"];
+        for (let i = 0; i < 36; i++) {
+          const s = document.createElement("span");
+          s.className = "confetti__bit";
+          s.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+          s.style.left = Math.random() * 100 + "vw";
+          s.style.animationDelay = (Math.random() * 0.2) + "s";
+          s.style.fontSize = (14 + Math.random() * 22) + "px";
+          confetti.appendChild(s);
+        }
+      }
+
+      async function playSong() {
+        // browsers allow play after user click; if file missing, it will fail silently
+        try {
+          song.currentTime = 0;
+          await song.play();
+        } catch (e) {
+          // If it fails (e.g., missing mp3), show a small hint
+          msg.textContent = "Music didn’t load 😭 (check the mp3 file path)";
+        }
+      }
+
+      yes.addEventListener("click", async () => {
+        msg.textContent = "W. Correct answer. I knew you were smart 💗";
         after.hidden = false;
+
+        // swap image to funny pic
+        mainImg.classList.add("img-pop");
+        mainImg.src = "assets/images/dog.gif";
+        setTimeout(() => mainImg.classList.remove("img-pop"), 240);
+
+        // celebration + cute animation
+        card.classList.add("card-win");
+        popConfetti();
+
+        // play careless whisper on YES click
+        await playSong();
+
+        // lock buttons
         yes.disabled = true;
         no.disabled = true;
       });
 
-      // Dodge the mouse
-      no.addEventListener("mouseenter", () => {
-        const card = document.querySelector(".card");
-        const rect = card.getBoundingClientRect();
+      again.addEventListener("click", async () => {
+        await playSong();
+      });
 
+      // Make NO button dodge the cursor
+      no.addEventListener("mouseenter", () => {
+        const rect = card.getBoundingClientRect();
         const maxX = rect.width - no.offsetWidth - 24;
         const maxY = rect.height - no.offsetHeight - 24;
 
